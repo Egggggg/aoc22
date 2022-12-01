@@ -11,8 +11,6 @@ fn main() {
 
         for i in 0..3 {
             if food > max[i] {
-                dbg!(food);
-
                 max.insert(i, food);
 
                 break;
