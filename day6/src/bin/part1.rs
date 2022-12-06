@@ -3,6 +3,8 @@ fn main() {
     let mut current = [0u8; 4];
     let mut found_at: usize = 0;
 
+    let start = std::time::Instant::now();
+
     for (i, c) in file.iter().enumerate() {
         current.rotate_right(1);
         current[0] = *c;
@@ -25,5 +27,6 @@ fn main() {
         }
     }
 
-    println!("First marker: {found_at}");
+    let us = start.elapsed().as_nanos() as f64 / 1000.;
+    println!("First marker: {found_at}\nIn {us}us");
 }

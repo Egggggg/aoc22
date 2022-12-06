@@ -5,6 +5,8 @@ fn main() {
     let input = String::from_utf8(file).unwrap();
     let (start, input) = input.split_once("\n\n").unwrap();
 
+    let start_time = std::time::Instant::now();
+
     let mut stacks = {
         // reverse so the top crates are at the end
         let lines = start.lines().rev();
@@ -95,6 +97,7 @@ fn main() {
     }
 
     let out: String = stacks.map(|s| s.chars().last().unwrap()).iter().collect();
+    let us = start_time.elapsed().as_nanos() as f64 / 1000.;
 
-    println!("Top crates: {out}");
+    println!("Top crates: {out}\nIn {us}us");
 }
