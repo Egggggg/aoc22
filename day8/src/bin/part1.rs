@@ -10,16 +10,14 @@ fn main() {
     // 3 - up
     // (these are the directions they face *to*, not where they face *from*)
     // u16 to fit all 10 heights
-    let mut lines: [Vec<u16>; 4] = [
-        vec![0; height],
-        vec![0; width],
-        vec![0; height],
-        vec![0; width],
+    let mut lines: [Vec<(u16, [u8; 10])>; 4] = [
+        vec![(0, [0; 10]); height],
+        vec![(0, [0; 10]); width],
+        vec![(0, [0; 10]); height],
+        vec![(0, [0; 10]); width],
     ];
 
     let start_time = std::time::Instant::now();
-
-    print!("{}", String::from_utf8(trees[50].to_vec()).unwrap());
 
     for y in 0..height {
         for x in 0..width {
@@ -35,54 +33,78 @@ fn main() {
 
             // if this tree is taller than the highest, add it to the list
             // a byte with one `1` bit is a higher value than one with all less significant bits combined
-            if current_bit > right[y] {
+            if current_bit > right[y].0 {
                 let right = right.get_mut(y).unwrap();
 
                 // OR them together, to get the new height in there
-                *right |= current_bit;
+                right.0 |= current_bit;
+                println!("right: ({x}, {y})");
+                right.1[current as usize] = y as u8;
             }
 
             // same thing as with right, we are iterating left to right top to bottom
             let down = lines.get_mut(1).unwrap();
 
-            if current_bit > down[x] {
+            if current_bit > down[x].0 {
                 let down = down.get_mut(x).unwrap();
 
-                *down |= current_bit;
+                down.0 |= current_bit;
+                println!("down:  ({x}, {y})");
+                down.1[current as usize] = x as u8;
             }
 
             let left = lines.get_mut(2).unwrap().get_mut(y).unwrap();
-            let left_bak = *left;
+            let left_old = left.0;
 
             // OR them together to count the tree
-            *left |= current_bit;
+            left.0 |= current_bit;
 
             // shift `left` right by `current` positions, then back left by the same amount
             // this will get rid of all zeroes to the right of the new shortest visible tree
-            *left = (*left >> current) << current;
+            left.0 = (left.0 >> current) << current;
 
-            if y == 50 && *left != left_bak {
-                println!(
-                    "\ntree: {}\nx: {x}\ncurrent: {current}\ncurrent_bit: {:#018b}\nleft:        {:#018b}",
-                    String::from_utf8(vec![trees[y][x]]).unwrap(),
-                    current_bit,
-                    left_bak
-                );
-                println!("left after:  {:#018b}", left);
-                println!();
+            if left.0 != left_old {
+                println!("left:  ({x}, {y})");
+                left.1[current as usize] = y as u8;
             }
 
             let up = lines.get_mut(3).unwrap().get_mut(x).unwrap();
+            let up_old = up.0;
 
             // same thing as left, these ones go in reverse
-            *up |= current_bit;
-            *up = (*up >> current) << current;
+            up.0 |= current_bit;
+            up.0 = (up.0 >> current) << current;
+
+            if up.0 != up_old {
+                println!("up:    ({x}, {y})");
+                up.1[current as usize] = x as u8;
+            }
         }
     }
 
-    let total: u16 = lines
+    // for each direction, check each position and see if any of their counted trees are the same as another counted tree
+    let mut counted: Vec<Vec<bool>> = vec![vec![false; height]; width];
+
+    for (index, line) in lines.iter().enumerate() {
+        for (pos, (_, trees)) in line.iter().enumerate() {
+            for tree in trees {
+                match index {
+                    // right or left
+                    // pos is y, tree is x
+                    0 | 2 => counted[pos as usize][*tree as usize] = true,
+                    // up or down
+                    // pos is x, tree is y
+                    _ => counted[*tree as usize][pos as usize] = true,
+                }
+            }
+        }
+    }
+
+    dbg!(&counted);
+
+    let total: usize = counted
         .iter()
-        .map(|l| l.iter().fold(0, |acc, e| acc + e.count_ones() as u16))
+        .map(|row| row.iter().filter(|pos| **pos).count())
         .sum();
 
     let us = start_time.elapsed().as_nanos() as f64 / 1000.;
