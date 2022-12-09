@@ -36,7 +36,6 @@ fn main() {
 
                 // OR them together, to get the new height in there
                 right.0 |= current_bit;
-                // println!("right: ({x}, {y})\n");
                 right.1[current_idx] = x as i8;
             }
 
@@ -47,38 +46,22 @@ fn main() {
                 let down = down.get_mut(x).unwrap();
 
                 down.0 |= current_bit;
-                // println!("down:  ({x}, {y})");
                 down.1[current_idx] = y as i8;
             }
 
             let left = lines.get_mut(2).unwrap().get_mut(y).unwrap();
-            let left_old = left.0;
 
-            // OR them together to count the tree
-            left.0 |= current_bit;
-
-            // shift `left` right by `current` positions, then back left by the same amount
-            // this will get rid of all zeroes to the right of the new shortest visible tree
-            left.0 = (left.0 >> current) << current;
-
-            if left.0 != left_old {
-                // println!("left:  ({x}, {y})");
-            }
-
+            // make sure the newest tree is marked as seen
             left.1[current_idx] = x as i8;
 
+            // remove smaller trees blocked by the new smallest
             for i in 0..current_idx {
                 left.1[i] = -1;
             }
 
             let up = lines.get_mut(3).unwrap().get_mut(x).unwrap();
 
-            // println!("up:  {:#018b}\nbit: {:#018b}", up.0, current_bit);
-
-            // same thing as left, these ones go in reverse
-            up.0 |= current_bit;
-            up.0 = (up.0 >> current) << current;
-
+            // same thing as left, these two are similar because they are discovered in reverse
             up.1[current_idx] = y as i8;
 
             for i in 0..current_idx {
