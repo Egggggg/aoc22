@@ -10,12 +10,10 @@ fn main() {
     // 3 - up
     // (these are the directions they face *to*, not where they face *from*)
     // u16 to fit all 10 heights
-    let mut lines: [Vec<(u16, [u8; 10])>; 4] = [
-        vec![(0, [0; 10]); height],
-        vec![(0, [0; 10]); width],
-        vec![(0, [0; 10]); height],
-        vec![(0, [0; 10]); width],
-    ];
+    // u8 is the position of the visible tree at that height
+    // index is the position of the line (x for up and down, y for left and right)
+    let mut lines: [u16; 4] = [0; 4];
+    let mut trees: Vec<Vec<u16
 
     let start_time = std::time::Instant::now();
 
@@ -38,8 +36,8 @@ fn main() {
 
                 // OR them together, to get the new height in there
                 right.0 |= current_bit;
-                println!("right: ({x}, {y})");
-                right.1[current as usize] = y as u8;
+                // println!("right: ({x}, {y})\n");
+                right.1[current as usize] = x as u8;
             }
 
             // same thing as with right, we are iterating left to right top to bottom
@@ -49,8 +47,8 @@ fn main() {
                 let down = down.get_mut(x).unwrap();
 
                 down.0 |= current_bit;
-                println!("down:  ({x}, {y})");
-                down.1[current as usize] = x as u8;
+                // println!("down:  ({x}, {y})");
+                down.1[current as usize] = y as u8;
             }
 
             let left = lines.get_mut(2).unwrap().get_mut(y).unwrap();
@@ -64,12 +62,15 @@ fn main() {
             left.0 = (left.0 >> current) << current;
 
             if left.0 != left_old {
-                println!("left:  ({x}, {y})");
-                left.1[current as usize] = y as u8;
+                // println!("left:  ({x}, {y})");
             }
+
+            left.1[current as usize] = x as u8;
 
             let up = lines.get_mut(3).unwrap().get_mut(x).unwrap();
             let up_old = up.0;
+
+            // println!("up:  {:#018b}\nbit: {:#018b}", up.0, current_bit);
 
             // same thing as left, these ones go in reverse
             up.0 |= current_bit;
@@ -77,10 +78,13 @@ fn main() {
 
             if up.0 != up_old {
                 println!("up:    ({x}, {y})");
-                up.1[current as usize] = x as u8;
             }
+
+            up.1[current as usize] = y as u8;
         }
     }
+
+    dbg!(&lines[1]);
 
     // for each direction, check each position and see if any of their counted trees are the same as another counted tree
     let mut counted: Vec<Vec<bool>> = vec![vec![false; height]; width];
